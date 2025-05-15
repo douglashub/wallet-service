@@ -37,7 +37,7 @@ The application includes a simple, intuitive web dashboard:
 - Instant feedback on financial operations
 
 ### UI Screenshot
-![Wallet Dashboard](https://i.imgur.com/l1HE4Cl.png)
+![Wallet Dashboard](https://i.imgur.com/rBYeN0t.png)
 
 ## 📋 Requirements
 
