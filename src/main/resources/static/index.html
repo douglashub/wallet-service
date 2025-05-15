@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallet Dashboard</title>
+    <title>Painel da Carteira</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
     <style>
         :root {
@@ -84,6 +84,12 @@
             cursor: not-allowed;
         }
 
+        #transferCard {
+            background: var(--card-background);
+            border: 2px solid #28a745;
+            border-radius: 8px;
+        }
+
         .alert {
             padding: 10px;
             margin-bottom: 15px;
@@ -131,49 +137,83 @@
 </head>
 <body>
     <div class="container">
-        <h1>My Wallet</h1>
+        <h1>Minha Carteira</h1>
         
         <div id="alertContainer"></div>
 
         <div id="userInfo" class="card" style="display: none;">
-            <h2>User Details</h2>
-            <p>User ID: <span id="userId"></span></p>
+            <h2>Detalhes do Usuário</h2>
+            <p>ID do Usuário: <span id="userId"></span></p>
         </div>
         
         <div id="balanceCard" class="card" style="display: none;">
-            <h2>Current Balance</h2>
-            <div id="balance">$0.00</div>
+            <h2>Saldo Atual</h2>
+            <div id="balance">R$ 0,00</div>
         </div>
 
         <div id="depositCard" class="card">
-            <h2>Deposit Funds</h2>
+            <h2>Depositar Fundos</h2>
             <form id="depositForm">
                 <div class="form-group">
-                    <input type="number" id="depositAmount" step="0.01" min="0.01" placeholder="Amount" required>
+                    <input type="number" id="depositAmount" step="0.01" min="0.01" placeholder="Valor" required>
                 </div>
-                <button type="submit" id="depositButton">Deposit</button>
+                <button type="submit" id="depositButton">Depositar</button>
             </form>
         </div>
 
         <div id="withdrawCard" class="card">
-            <h2>Withdraw Funds</h2>
+            <h2>Sacar Fundos</h2>
             <form id="withdrawForm">
                 <div class="form-group">
-                    <input type="number" id="withdrawAmount" step="0.01" min="0.01" placeholder="Amount" required>
+                    <input type="number" id="withdrawAmount" step="0.01" min="0.01" placeholder="Valor" required>
                 </div>
-                <button type="submit" id="withdrawButton">Withdraw</button>
+                <button type="submit" id="withdrawButton">Sacar</button>
+            </form>
+        </div>
+
+        <div id="transferCard" class="card">
+            <h2>Transferir Fundos</h2>
+            <form id="transferForm">
+                <div class="form-group">
+                    <input type="text" id="recipientId" placeholder="ID do Destinatário" required>
+                </div>
+                <div class="form-group">
+                    <input type="number" id="transferAmount" step="0.01" min="0.01" placeholder="Valor" required>
+                </div>
+                <button type="submit" id="transferButton">Transferir</button>
             </form>
         </div>
 
         <div id="transactionsCard" class="card">
-            <h2>Recent Transactions</h2>
-            <div id="transactionsList" class="transactions-list">No transactions yet</div>
+            <h2>Transações Recentes</h2>
+            <div id="transactionsList" class="transactions-list">Nenhuma transação ainda</div>
         </div>
     </div>
 
     <script>
         const API_BASE = '/api/wallets';
         let userId = null;
+
+        // Função para formatar moeda em Real brasileiro
+        function formatarMoeda(valor) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(valor);
+        }
+
+        // Função para formatar data e hora no padrão brasileiro
+        function formatarDataHora(dataString) {
+            return new Date(dataString).toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+        }
 
         function showAlert(message, type = 'success') {
             const alertContainer = document.getElementById('alertContainer');
@@ -206,11 +246,11 @@
                 document.getElementById('userId').textContent = userId;
                 document.getElementById('balanceCard').style.display = 'block';
 
-                showAlert(`Wallet created successfully for user ${userId}`);
+                showAlert(`Carteira criada com sucesso para o usuário ${userId}`);
                 return true;
             } catch (error) {
                 console.error('Wallet initialization failed:', error);
-                showAlert('Failed to initialize wallet. Please try again.', 'error');
+                showAlert('Falha ao inicializar carteira. Por favor, tente novamente.', 'error');
                 return false;
             }
         }
@@ -223,10 +263,10 @@
                     throw new Error('Failed to fetch balance');
                 }
                 const wallet = await response.json();
-                document.getElementById('balance').textContent = `$${wallet.balance.toFixed(2)}`;
+                document.getElementById('balance').textContent = formatarMoeda(wallet.balance);
             } catch (error) {
                 console.error('Error fetching balance:', error);
-                showAlert('Unable to update balance', 'error');
+                showAlert('Não foi possível atualizar o saldo', 'error');
             }
         }
 
@@ -241,23 +281,30 @@
                 
                 const transactionsList = document.getElementById('transactionsList');
                 if (transactions.length === 0) {
-                    transactionsList.innerHTML = 'No transactions yet';
+                    transactionsList.innerHTML = 'Nenhuma transação ainda';
                     return;
                 }
 
-                const html = transactions.map(t => `
-                    <div class="transaction">
-                        <span>${t.type}</span>
-                        <span class="transaction-amount ${t.amount > 0 ? 'positive' : 'negative'}">
-                            ${t.amount > 0 ? '+' : ''}$${Math.abs(t.amount).toFixed(2)}
-                        </span>
-                        <span>${new Date(t.timestamp).toLocaleString()}</span>
-                    </div>
-                `).join('');
+                const html = transactions.map(t => {
+                    // Traduzir tipos de transação
+                    const tipoTransacao = t.type === 'deposit' ? 'Depósito' : 
+                                         t.type === 'withdraw' ? 'Saque' : 
+                                         t.type === 'transfer' ? 'Transferência' : t.type;
+                    
+                    return `
+                        <div class="transaction">
+                            <span>${tipoTransacao}</span>
+                            <span class="transaction-amount ${t.amount > 0 ? 'positive' : 'negative'}">
+                                ${t.amount > 0 ? '+' : ''}${formatarMoeda(Math.abs(t.amount))}
+                            </span>
+                            <span>${formatarDataHora(t.timestamp)}</span>
+                        </div>
+                    `;
+                }).join('');
                 transactionsList.innerHTML = html;
             } catch (error) {
                 console.error('Error loading transactions:', error);
-                showAlert('Unable to load transactions', 'error');
+                showAlert('Não foi possível carregar as transações', 'error');
             }
         }
 
@@ -278,13 +325,13 @@
                     throw new Error('Deposit failed');
                 }
 
-                showAlert(`Successfully deposited $${amount}`);
+                showAlert(`Depósito de ${formatarMoeda(amount)} realizado com sucesso`);
                 updateBalance();
                 loadTransactions();
                 amountInput.value = '';
             } catch (error) {
                 console.error('Deposit error:', error);
-                showAlert('Deposit failed. Please try again.', 'error');
+                showAlert('Falha no depósito. Por favor, tente novamente.', 'error');
             } finally {
                 depositButton.disabled = false;
             }
@@ -307,15 +354,55 @@
                     throw new Error('Withdrawal failed');
                 }
 
-                showAlert(`Successfully withdrew $${amount}`);
+                showAlert(`Saque de ${formatarMoeda(amount)} realizado com sucesso`);
                 updateBalance();
                 loadTransactions();
                 amountInput.value = '';
             } catch (error) {
                 console.error('Withdrawal error:', error);
-                showAlert('Withdrawal failed. Please check your balance.', 'error');
+                showAlert('Falha no saque. Por favor, verifique seu saldo.', 'error');
             } finally {
                 withdrawButton.disabled = false;
+            }
+        });
+
+        // Transfer handler
+        document.getElementById('transferForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const recipientIdInput = document.getElementById('recipientId');
+            const amountInput = document.getElementById('transferAmount');
+            const recipientId = recipientIdInput.value.trim();
+            const amount = amountInput.value;
+            const transferButton = document.getElementById('transferButton');
+
+            try {
+                transferButton.disabled = true;
+                const response = await fetch(`${API_BASE}/${userId}/transfer`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        targetOwnerId: recipientId,
+                        amount: amount,
+                        description: `Transferência de ${userId} para ${recipientId}`
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Transfer failed');
+                }
+
+                showAlert(`Transferência de ${formatarMoeda(amount)} para ${recipientId} realizada com sucesso`);
+                updateBalance();
+                loadTransactions();
+                recipientIdInput.value = '';
+                amountInput.value = '';
+            } catch (error) {
+                console.error('Transfer error:', error);
+                showAlert('Falha na transferência. Por favor, verifique os dados e tente novamente.', 'error');
+            } finally {
+                transferButton.disabled = false;
             }
         });
 

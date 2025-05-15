@@ -89,10 +89,29 @@ public class WalletController {
     @Operation(summary = "Transferir fundos (endpoint alternativo)", description = "Transfere dinheiro entre carteiras de usuários")
     public ResponseEntity<WalletDTO> transferFromOwner(
             @PathVariable @NotBlank String ownerId,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody @NotNull Map<String, Object> request) {
+        
+        // Validate required fields
+        if (!request.containsKey("targetOwnerId") || !request.containsKey("amount")) {
+            throw new IllegalArgumentException("targetOwnerId and amount are required");
+        }
         
         String targetOwnerId = (String) request.get("targetOwnerId");
-        BigDecimal amount = new BigDecimal(request.get("amount").toString());
+        if (targetOwnerId == null || targetOwnerId.trim().isEmpty()) {
+            throw new IllegalArgumentException("targetOwnerId cannot be null or empty");
+        }
+        
+        BigDecimal amount;
+        try {
+            amount = new BigDecimal(request.get("amount").toString());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid amount format");
+        }
+        
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+        
         String description = (String) request.get("description");
         
         TransferDTO transferDTO = TransferDTO.builder()
