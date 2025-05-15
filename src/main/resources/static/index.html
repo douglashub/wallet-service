@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Service</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        .link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Wallet Service</h1>
+        <div class="card">
+            <h2>Welcome to the Wallet Service API</h2>
+            <p>This service provides digital wallet functionality including deposits, withdrawals, and transfers.</p>
+            <a href="/swagger-ui/index.html" class="link">API Documentation</a>
+        </div>
+        <div class="card">
+            <h2>Database Console</h2>
+            <p>Access the H2 database console to view and manage data:</p>
+            <a href="/h2-console" class="link">H2 Console</a>
+            <p>Connection details:</p>
+            <ul>
+                <li>JDBC URL: jdbc:h2:mem:walletdb</li>
+                <li>Username: sa</li>
+                <li>Password: (leave empty)</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h2>Health and Metrics</h2>
+            <p>Monitor the application health and metrics:</p>
+            <a href="/actuator/health" class="link">Health Status</a>
+            <a href="/actuator/info" class="link" style="margin-left: 10px;">Application Info</a>
+            <a href="/actuator/metrics" class="link" style="margin-left: 10px;">Metrics</a>
+        </div>
+    </div>
+</body>
+</html>
