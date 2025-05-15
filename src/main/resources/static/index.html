@@ -3,64 +3,331 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallet Service</title>
+    <title>Wallet Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
     <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #f5f5f5;
+            --card-background: white;
+            --text-color: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background: var(--background-color);
+            color: var(--text-color);
             line-height: 1.6;
         }
-        h1 {
-            color: #333;
-        }
+        
         .container {
-            max-width: 800px;
-            margin: 0 auto;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 15px;
         }
+        
         .card {
+            background: var(--card-background);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            padding: 20px;
-            margin-bottom: 20px;
-            background-color: #f9f9f9;
         }
-        .link {
-            display: inline-block;
-            margin-top: 10px;
-            color: #0066cc;
-            text-decoration: none;
+        
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: 100%;
         }
-        .link:hover {
-            text-decoration: underline;
+        
+        button:hover {
+            background: #0056b3;
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .transactions-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .transaction {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .transaction:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-amount {
+            font-weight: bold;
+        }
+
+        .transaction-amount.positive {
+            color: green;
+        }
+
+        .transaction-amount.negative {
+            color: red;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Wallet Service</h1>
-        <div class="card">
-            <h2>Welcome to the Wallet Service API</h2>
-            <p>This service provides digital wallet functionality including deposits, withdrawals, and transfers.</p>
-            <a href="/swagger-ui/index.html" class="link">API Documentation</a>
+        <h1>My Wallet</h1>
+        
+        <div id="alertContainer"></div>
+
+        <div id="userInfo" class="card" style="display: none;">
+            <h2>User Details</h2>
+            <p>User ID: <span id="userId"></span></p>
         </div>
-        <div class="card">
-            <h2>Database Console</h2>
-            <p>Access the H2 database console to view and manage data:</p>
-            <a href="/h2-console" class="link">H2 Console</a>
-            <p>Connection details:</p>
-            <ul>
-                <li>JDBC URL: jdbc:h2:mem:walletdb</li>
-                <li>Username: sa</li>
-                <li>Password: (leave empty)</li>
-            </ul>
+        
+        <div id="balanceCard" class="card" style="display: none;">
+            <h2>Current Balance</h2>
+            <div id="balance">$0.00</div>
         </div>
-        <div class="card">
-            <h2>Health and Metrics</h2>
-            <p>Monitor the application health and metrics:</p>
-            <a href="/actuator/health" class="link">Health Status</a>
-            <a href="/actuator/info" class="link" style="margin-left: 10px;">Application Info</a>
-            <a href="/actuator/metrics" class="link" style="margin-left: 10px;">Metrics</a>
+
+        <div id="depositCard" class="card">
+            <h2>Deposit Funds</h2>
+            <form id="depositForm">
+                <div class="form-group">
+                    <input type="number" id="depositAmount" step="0.01" min="0.01" placeholder="Amount" required>
+                </div>
+                <button type="submit" id="depositButton">Deposit</button>
+            </form>
+        </div>
+
+        <div id="withdrawCard" class="card">
+            <h2>Withdraw Funds</h2>
+            <form id="withdrawForm">
+                <div class="form-group">
+                    <input type="number" id="withdrawAmount" step="0.01" min="0.01" placeholder="Amount" required>
+                </div>
+                <button type="submit" id="withdrawButton">Withdraw</button>
+            </form>
+        </div>
+
+        <div id="transactionsCard" class="card">
+            <h2>Recent Transactions</h2>
+            <div id="transactionsList" class="transactions-list">No transactions yet</div>
         </div>
     </div>
+
+    <script>
+        const API_BASE = '/api/wallets';
+        let userId = null;
+
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = `
+                <div class="alert alert-${type}">
+                    ${message}
+                </div>
+            `;
+            setTimeout(() => {
+                alertContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        async function initializeWallet() {
+            try {
+                const ownerId = `user_${Date.now()}`;
+                const response = await fetch(`${API_BASE}?ownerId=${ownerId}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create wallet');
+                }
+
+                const wallet = await response.json();
+                userId = wallet.ownerId;
+
+                // Show user info and balance card
+                document.getElementById('userInfo').style.display = 'block';
+                document.getElementById('userId').textContent = userId;
+                document.getElementById('balanceCard').style.display = 'block';
+
+                showAlert(`Wallet created successfully for user ${userId}`);
+                return true;
+            } catch (error) {
+                console.error('Wallet initialization failed:', error);
+                showAlert('Failed to initialize wallet. Please try again.', 'error');
+                return false;
+            }
+        }
+
+        async function updateBalance() {
+            if (!userId) return;
+            try {
+                const response = await fetch(`${API_BASE}/${userId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch balance');
+                }
+                const wallet = await response.json();
+                document.getElementById('balance').textContent = `$${wallet.balance.toFixed(2)}`;
+            } catch (error) {
+                console.error('Error fetching balance:', error);
+                showAlert('Unable to update balance', 'error');
+            }
+        }
+
+        async function loadTransactions() {
+            if (!userId) return;
+            try {
+                const response = await fetch(`${API_BASE}/${userId}/transactions`);
+                if (!response.ok) {
+                    throw new Error('Failed to load transactions');
+                }
+                const transactions = await response.json();
+                
+                const transactionsList = document.getElementById('transactionsList');
+                if (transactions.length === 0) {
+                    transactionsList.innerHTML = 'No transactions yet';
+                    return;
+                }
+
+                const html = transactions.map(t => `
+                    <div class="transaction">
+                        <span>${t.type}</span>
+                        <span class="transaction-amount ${t.amount > 0 ? 'positive' : 'negative'}">
+                            ${t.amount > 0 ? '+' : ''}$${Math.abs(t.amount).toFixed(2)}
+                        </span>
+                        <span>${new Date(t.timestamp).toLocaleString()}</span>
+                    </div>
+                `).join('');
+                transactionsList.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                showAlert('Unable to load transactions', 'error');
+            }
+        }
+
+        // Deposit handler
+        document.getElementById('depositForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amountInput = document.getElementById('depositAmount');
+            const amount = amountInput.value;
+            const depositButton = document.getElementById('depositButton');
+
+            try {
+                depositButton.disabled = true;
+                const response = await fetch(`${API_BASE}/${userId}/deposit?amount=${amount}`, { 
+                    method: 'POST' 
+                });
+
+                if (!response.ok) {
+                    throw new Error('Deposit failed');
+                }
+
+                showAlert(`Successfully deposited $${amount}`);
+                updateBalance();
+                loadTransactions();
+                amountInput.value = '';
+            } catch (error) {
+                console.error('Deposit error:', error);
+                showAlert('Deposit failed. Please try again.', 'error');
+            } finally {
+                depositButton.disabled = false;
+            }
+        });
+
+        // Withdraw handler
+        document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amountInput = document.getElementById('withdrawAmount');
+            const amount = amountInput.value;
+            const withdrawButton = document.getElementById('withdrawButton');
+
+            try {
+                withdrawButton.disabled = true;
+                const response = await fetch(`${API_BASE}/${userId}/withdraw?amount=${amount}`, { 
+                    method: 'POST' 
+                });
+
+                if (!response.ok) {
+                    throw new Error('Withdrawal failed');
+                }
+
+                showAlert(`Successfully withdrew $${amount}`);
+                updateBalance();
+                loadTransactions();
+                amountInput.value = '';
+            } catch (error) {
+                console.error('Withdrawal error:', error);
+                showAlert('Withdrawal failed. Please check your balance.', 'error');
+            } finally {
+                withdrawButton.disabled = false;
+            }
+        });
+
+        // Initialization
+        (async () => {
+            const initialized = await initializeWallet();
+            if (initialized) {
+                updateBalance();
+                loadTransactions();
+                setInterval(updateBalance, 5000);
+            }
+        })();
+    </script>
 </body>
 </html>

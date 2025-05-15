@@ -19,16 +19,37 @@ A Spring Boot microservice for managing digital wallets, supporting essential fi
 - ✅ In-memory H2 database with console access
 - ✅ Health monitoring and metrics
 
+## 🖥️ User Interface
+
+The application includes a simple, intuitive web dashboard:
+
+- 🆔 Dynamic user ID generation
+- 💰 Real-time balance display
+- 📥 Deposit functionality
+- 📤 Withdrawal functionality
+- 📋 Recent transactions list
+- 🚨 User-friendly error handling and alerts
+
+### UI Features
+- Responsive design
+- Real-time balance updates
+- Transaction history with type and amount visualization
+- Instant feedback on financial operations
+
+### UI Screenshot
+![Wallet Dashboard](https://i.imgur.com/l1HE4Cl.png)
+
 ## 📋 Requirements
 
 - Java 17 or higher
 - Maven 3.6+
+- Modern web browser
 
 ## 🛠️ Installation & Running
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/wallet-service.git
+   git clone git@github.com:douglashub/wallet-service.git
    cd wallet-service
    ```
 
@@ -60,6 +81,7 @@ mvn verify
 
 Once the application is running, you can access:
 
+- **Web Dashboard**: http://localhost:8080
 - **Swagger UI**: http://localhost:8080/swagger-ui.html
 - **OpenAPI JSON**: http://localhost:8080/api-docs
 - **H2 Database Console**: http://localhost:8080/h2-console
@@ -218,6 +240,8 @@ Due to time constraints (2-hour implementation), some production features were o
 - Add async processing for notifications
 - Database migration to PostgreSQL
 - Add comprehensive logging with correlation IDs
+- Implement transfer funds within the web dashboard
+- Add more advanced UI features
 
 ## 📝 License
 
