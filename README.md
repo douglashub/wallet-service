@@ -49,7 +49,7 @@ The application includes a simple, intuitive web dashboard:
 
 1. Clone the repository:
    ```bash
-   git clone git@github.com:douglashub/wallet-service.git
+   git clone git@github.com:kamikyforce/wallet-service.git
    cd wallet-service
    ```
 
